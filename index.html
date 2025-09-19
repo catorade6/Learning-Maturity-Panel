@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Learning Maturity Panel — Web App</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#0f152c; --ink:#e8ecff; --muted:#aeb7d9; --accent:#6b7cff; --accent-2:#94a3ff; --line:#1c2342;
+      --ok:#10b981; --warn:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1020,#0b1020 60%,#0d1428);color:var(--ink);font:14px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .container{max-width:1000px;margin:0 auto;padding:24px}
+    .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size:22px;margin:0;display:flex;gap:10px;align-items:center}
+    .badge{display:inline-flex;align-items:center;border:1px solid #243063;background:#131a36;padding:4px 10px;border-radius:999px;color:#c9d2ff;font-size:12px}
+    .btn{appearance:none;border:1px solid #2a3560;background:#12193a;color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer}
+    .btn:hover{border-color:#3a4784}
+    .btn.secondary{background:#0f152c}
+    .btn.ghost{background:transparent}
+    .btn.outline{background:transparent;border-color:#3a4784}
+    .btn.success{background:#0b3a2f;border-color:#146b5c}
+    .row{display:grid;gap:16px}
+    @media(min-width:860px){.row{grid-template-columns:1fr 1fr}}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,.25);overflow:hidden}
+    .card .body{padding:18px}
+    .list{display:grid;gap:10px}
+    .opt{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#0c1330}
+    .opt.active{border-color:#2c3a7a;background:#121b41}
+    .opt small{color:var(--muted)}
+    .progress{height:8px;background:#121936;border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+    .progress > span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;text-align:left}
+    thead th{color:#9fb0ff;font-weight:600;border-bottom:1px solid var(--line)}
+    tbody td{border-top:1px solid var(--line)}
+    .grid{display:grid;gap:16px}
+    @media(min-width:860px){.grid.cols-3{grid-template-columns:2fr 1fr}}
+    .muted{color:var(--muted)}
+    .tag{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:#121b41;border:1px solid #273469;color:#bfc7ff;font-size:12px}
+    .q{padding:12px;border:1px solid var(--line);border-radius:12px;background:#0c1330}
+    .scale{display:flex;gap:6px}
+    .scale button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#0d1535;color:#dbe3ff;cursor:pointer}
+    .scale button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    .footer{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+    .chart{height:260px;border:1px solid var(--line);border-radius:14px;background:#0b132f;display:flex;align-items:center;justify-content:center}
+    .helper{font-size:12px;color:var(--muted)}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #2a3560;color:#cbd5ff;font-size:12px}
+    @media print{
+      body{background:#fff;color:#000}
+      .card{box-shadow:none;border:1px solid #ccc}
+      .btn, .header .btn{display:none}
+      .badge,.pill,.tag{border-color:#ccc}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l7.794 4.5v9L12 21 4.206 16.5v-9L12 3z" stroke="#8ea2ff" stroke-width="1.2" fill="#121a3a"/></svg>
+        Learning Maturity Panel
+      </h1>
+      <button class="btn ghost" id="backBtn" style="display:none">⟵ Back to Main Menu</button>
+    </div>
+
+    <div id="screen-main">
+      <div class="card">
+        <div class="body">
+          <div class="row">
+            <div>
+              <h2>Select domains <span class="pill">multi‑select</span></h2>
+              <div class="list" id="domainList"></div>
+            </div>
+            <div>
+              <h2>Run options</h2>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <button class="btn" id="startBtn">▶ Start with Selected</button>
+                <button class="btn secondary" id="demoBtn">⚙ Use Demo Data</button>
+              </div>
+              <div class="helper">Tip: If nothing is selected, we'll run <b>Performance Clarity</b> by default.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-runner" style="display:none">
+      <div class="body" style="padding:0 0 10px 0">
+        <div class="footer">
+          <div class="muted" id="stepLabel">Step 1</div>
+          <div class="progress" style="width:220px"><span id="progbar"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="body">
+          <h2 id="runnerTitle">Domain</h2>
+          <div id="questionList" class="grid" style="gap:12px"></div>
+          <div class="footer" style="margin-top:10px">
+            <div class="muted" id="answeredCount">Answered 0 / 0</div>
+            <button class="btn success" id="submitDomainBtn">✓ Submit Domain</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screen-report" style="display:none">
+      <div class="card">
+        <div class="body">
+          <h2>Executive Summary</h2>
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr><th>Domain</th><th>Final Level</th><th>Description</th></tr>
+              </thead>
+              <tbody id="summaryBody"></tbody>
+            </table>
+          </div>
+          <div class="footer" style="margin-top:10px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn secondary" id="pdfBtn">🖨 Export as PDF</button>
+              <button class="btn secondary" id="csvBtn">⬇ Export as CSV</button>
+              <button class="btn secondary" id="mdBtn">📝 Export as Markdown</button>
+            </div>
+            <button class="btn outline" id="backBtn2">⟵ Back to Main Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="domainReports" class="grid" style="margin-top:16px;gap:16px"></div>
+    </div>
+  </div>
+
+  <script>
+  // ======= Data & Definitions =======
+  const Domains = {
+    businessAlignment: { key:'businessAlignment', name:'Business Alignment', items:[], groupings:[], levels:{1:'Ad hoc.',2:'Emerging.',3:'Established.',4:'Optimized.'} },
+    performanceClarity: {
+      key:'performanceClarity', name:'Performance Clarity',
+      items:[
+        {id:'PC_Q1', group:'expectations', text:'Performance expectations are clearly defined for each critical role.', help:'Expectations include outcomes, quality standards, and behavioral indicators.'},
+        {id:'PC_Q2', group:'expectations', text:'Objectives are aligned to business goals and cascaded consistently.', help:'Goals roll up to team/BU goals with traceability to KPIs.'},
+        {id:'PC_Q3', group:'expectations', text:'Success criteria are specific, measurable, and time-bound.', help:'Well-formed acceptance criteria exist for key tasks or deliverables.'},
+        {id:'PC_Q4', group:'expectations', text:'Roles have documented responsibilities and decision rights.', help:'RACI or similar; people know what \"good\" looks like.'},
+        {id:'PC_Q5', group:'capability', text:'We measure performance capability with consistent rubrics or observations.', help:'Defined scales/checklists for critical tasks; inter-rater reliability.'},
+        {id:'PC_Q6', group:'capability', text:'Leading indicators (readiness, adherence) are tracked and reviewed.', help:'Use leading measures to predict downstream impact.'},
+        {id:'PC_Q7', group:'impact', text:'Impact on business KPIs is assessed and attributed.', help:'Connect learning/performance to metrics like quality, throughput, NPS.'},
+        {id:'PC_Q8', group:'barriers', text:'We identify barriers/enablers and act on them systematically.', help:'Friction logs, root cause analyses, and removal routines exist.'},
+        {id:'PC_Q9', group:'barriers', text:'Feedback loops drive continuous improvement in performance.', help:'Regular retros, experiments, and iteration based on data.'},
+      ],
+      groupings:[
+        {key:'expectations', label:'Defining Expectations', itemIds:['PC_Q1','PC_Q2','PC_Q3','PC_Q4']},
+        {key:'capability', label:'Measuring Capability', itemIds:['PC_Q5','PC_Q6']},
+        {key:'impact', label:'Assessing Impact', itemIds:['PC_Q7']},
+        {key:'barriers', label:'Barriers & Enablers', itemIds:['PC_Q8','PC_Q9']},
+      ],
+      levels:{
+        1:'Ad hoc. Expectations and measures are inconsistent; little linkage to business outcomes.',
+        2:'Emerging. Core elements exist but are uneven; capability and impact measures are basic.',
+        3:'Established. Clear definitions and consistent measures; impact is tracked for key areas.',
+        4:'Optimized. Standardized, predictive, and business-integrated; continuous improvement embedded.'
+      }
+    },
+    learningEffectiveness: { key:'learningEffectiveness', name:'Learning Effectiveness', items:[], groupings:[], levels:{1:'Ad hoc.',2:'Emerging.',3:'Established.',4:'Optimized.'} },
+    learnerInsight: { key:'learnerInsight', name:'Learner Insight', items:[], groupings:[], levels:{1:'Ad hoc.',2:'Emerging.',3:'Established.',4:'Optimized.'} },
+  };
+  const AllDomainKeys = ['businessAlignment','performanceClarity','learningEffectiveness','learnerInsight'];
+
+  // ======= State =======
+  let selected = [];
+  let screen = 'main';
+  let activeIndex = 0;
+  let responsesByDomain = {}; // {domainKey: { [itemId]: score }}
+
+  // ======= Helpers =======
+  function $(id){return document.getElementById(id)}
+  function show(id, yes){$(id).style.display = yes ? '' : 'none'}
+  function setProgress(pct){$('progbar').style.width = Math.max(0, Math.min(100, pct)) + '%'}
+  function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
+  function levelFromAvg(a){ if(a<=2) return 1; if(a<=3) return 2; if(a<=4) return 3; return 4 }
+  function levelFromCoverage(c){ if(c<0.6) return 1; if(c<0.8) return 2; if(c<0.95) return 3; return 4 }
+  function levelFromLowScores(resp){ const vals=Object.values(resp).filter(v=>v!=null); if(vals.length===0) return 1; const low=vals.filter(v=>v<=2).length; const pct=low/vals.length; if(pct>0.4) return 1; if(pct>0.2) return 2; if(pct>0.15) return 3; if(pct===0) return 4; return 4 }
+  function calcFinal(domainKey){
+    const d = Domains[domainKey]; const items=d.items||[]; const resp=responsesByDomain[domainKey]||{};
+    const answered = items.map(q=>resp[q.id]).filter(v=>v!=null);
+    const a = answered.length?avg(answered):0; const LAVG=levelFromAvg(a);
+    const cov = answered.length/Math.max(1,items.length); const LCOV=levelFromCoverage(cov);
+    const LLOW = levelFromLowScores(resp);
+    const level = Math.min(LAVG,LCOV,LLOW); // contingency hooks could adjust here
+    return { level, avg:a }
+  }
+  function groupAvgs(domainKey){
+    const d=Domains[domainKey], resp=responsesByDomain[domainKey]||{};
+    return (d.groupings||[]).map(g=>{
+      const vals=g.itemIds.map(id=>resp[id]).filter(v=>v!=null);
+      const s=vals.length?avg(vals):0; return { key:g.key, label:g.label, score:+s.toFixed(2) }
+    })
+  }
+
+  // Simple radar chart renderer (SVG)
+  function renderRadar(el, groups){
+    el.innerHTML='';
+    const size=260, cx=size/2, cy=size/2, r=100, levels=5; // 1-5 scale
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox',`0 0 ${size} ${size}`); svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
+    // grid circles
+    for(let i=1;i<=levels;i++){
+      const rr=r*(i/levels);
+      const c = document.createElementNS(svg.namespaceURI,'circle');
+      c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',rr);
+      c.setAttribute('fill','none'); c.setAttribute('stroke','#22305f'); c.setAttribute('stroke-width','1');
+      svg.appendChild(c);
+    }
+    const n = groups.length; if(n===0){ el.appendChild(svg); return }
+    // axes + labels
+    groups.forEach((g,idx)=>{
+      const ang = (Math.PI*2*(idx/n)) - Math.PI/2; // start at top
+      const x = cx + r*Math.cos(ang), y = cy + r*Math.sin(ang);
+      const axis = document.createElementNS(svg.namespaceURI,'line');
+      axis.setAttribute('x1',cx); axis.setAttribute('y1',cy); axis.setAttribute('x2',x); axis.setAttribute('y2',y);
+      axis.setAttribute('stroke','#22305f'); axis.setAttribute('stroke-width','1'); svg.appendChild(axis);
+      // label
+      const lx = cx + (r+14)*Math.cos(ang), ly = cy + (r+14)*Math.sin(ang);
+      const text = document.createElementNS(svg.namespaceURI,'text'); text.setAttribute('x',lx); text.setAttribute('y',ly);
+      text.setAttribute('fill','#aeb7d9'); text.setAttribute('font-size','10'); text.setAttribute('text-anchor', Math.cos(ang)>0.3?'start':Math.cos(ang)<-0.3?'end':'middle');
+      text.textContent = g.label; svg.appendChild(text);
+    });
+    // polygon
+    const pts = groups.map((g,idx)=>{
+      const val = Math.max(0, Math.min(5, g.score));
+      const rr = (val/5)*r; const ang=(Math.PI*2*(idx/n)) - Math.PI/2;
+      const x=cx+rr*Math.cos(ang), y=cy+rr*Math.sin(ang); return `${x},${y}`
+    }).join(' ');
+    const poly = document.createElementNS(svg.namespaceURI,'polygon');
+    poly.setAttribute('points',pts); poly.setAttribute('fill','#6b7cff55'); poly.setAttribute('stroke','#6b7cff'); poly.setAttribute('stroke-width','2');
+    svg.appendChild(poly);
+    el.appendChild(svg);
+  }
+
+  // ======= Screens =======
+  function renderMain(){
+    screen='main'; show('screen-main',true); show('screen-runner',false); show('screen-report',false); show('backBtn',false);
+    const list=$('domainList'); list.innerHTML='';
+    const keys=AllDomainKeys;
+    keys.forEach(k=>{
+      const d=Domains[k];
+      const row=document.createElement('label'); row.className='opt'+(selected.includes(k)?' active':'');
+      const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=selected.includes(k);
+      cb.addEventListener('change',()=>{ if(cb.checked){selected.push(k)} else {selected=selected.filter(x=>x!==k)}; renderMain();});
+      const box=document.createElement('div'); box.style.marginTop='2px'; box.appendChild(cb);
+      const txt=document.createElement('div');
+      txt.innerHTML=`<div style="font-weight:600">${d.name}</div>${(k!=='performanceClarity')?'<small class="muted">Add grouping definitions to unlock radar charts.</small>':''}`;
+      row.appendChild(box); row.appendChild(txt); list.appendChild(row);
+    })
+  }
+
+  function startRunner(mode){
+    if(!selected.length) selected=['performanceClarity'];
+    if(mode==='demo'){
+      // seed demo responses
+      responsesByDomain={};
+      selected.forEach(k=>{
+        const d=Domains[k]; if(!d.items.length) return;
+        const r={}; d.items.forEach(q=>{ r[q.id] = (q.group==='expectations'||q.group==='barriers')?4:3; });
+        responsesByDomain[k]=r;
+      });
+      renderReport(); return;
+    }
+    activeIndex=0; responsesByDomain={}; renderRunner();
+  }
+
+  function renderRunner(){
+    screen='runner'; show('screen-main',false); show('screen-runner',true); show('screen-report',false); show('backBtn',true);
+    const k = selected[activeIndex]; const d=Domains[k];
+    $('runnerTitle').textContent=d.name;
+    $('stepLabel').textContent = `Step ${activeIndex+1} of ${selected.length}`;
+    setProgress(Math.round(((activeIndex)/selected.length)*100));
+    const list=$('questionList'); list.innerHTML='';
+    const answers = responsesByDomain[k]||{};
+    d.items.forEach((q,idx)=>{
+      const wrap=document.createElement('div'); wrap.className='q';
+      const title=document.createElement('div'); title.innerHTML=`<b>Q${idx+1}.</b> ${q.text}`; wrap.appendChild(title);
+      if(q.help){ const h=document.createElement('div'); h.className='helper'; h.textContent=q.help; wrap.appendChild(h); }
+      const scale=document.createElement('div'); scale.className='scale';
+      for(let s=1;s<=5;s++){
+        const b=document.createElement('button'); b.textContent=String(s);
+        if(answers[q.id]===s){ b.classList.add('active'); }
+        b.addEventListener('click',()=>{ answers[q.id]=s; responsesByDomain[k]=answers; renderRunner(); });
+        scale.appendChild(b);
+      }
+      wrap.appendChild(scale); list.appendChild(wrap);
+    });
+    const answered = Object.values(answers).filter(v=>v!=null).length;
+    $('answeredCount').textContent = `Answered ${answered} / ${d.items.length}`;
+    $('submitDomainBtn').onclick = ()=>{
+      const next = activeIndex+1; if(next<selected.length){ activeIndex=next; renderRunner(); }
+      else { renderReport(); }
+    };
+  }
+
+  function renderReport(){
+    screen='report'; show('screen-main',false); show('screen-runner',false); show('screen-report',true); show('backBtn',true);
+    // Summary
+    const tbody=$('summaryBody'); tbody.innerHTML='';
+    selected.forEach(k=>{
+      const d=Domains[k]; const {level} = d.items.length?calcFinal(k):{level:1};
+      const tr=document.createElement('tr');
+      const desc=d.levels[level];
+      tr.innerHTML=`<td style="font-weight:600">${d.name}</td><td>Level ${level}</td><td class="muted">${desc}</td>`;
+      tbody.appendChild(tr);
+    });
+    // Domain Sections
+    const sec=$('domainReports'); sec.innerHTML='';
+    selected.forEach((k,idx)=>{
+      const d=Domains[k]; const res=responsesByDomain[k]||{}; const {level}=d.items.length?calcFinal(k):{level:1};
+      const card=document.createElement('div'); card.className='card';
+      const body=document.createElement('div'); body.className='body'; card.appendChild(body);
+      body.innerHTML = `<div class="footer" style="margin-bottom:8px"><h3 style="margin:0">${idx+1}/${selected.length} — ${d.name}</h3><span class="badge">Final Level: ${level}</span></div>`+
+        `<div class="grid cols-3"><div><div class="tag" style="margin-bottom:8px">Level ${level}</div><p class="muted">${d.levels[level]}</p></div>`+
+        `<div><div id="chart_${k}" class="chart"></div><div class="helper" style="text-align:center;margin-top:6px">Grouping scores (1–5)</div></div></div>`;
+      sec.appendChild(card);
+      // radar
+      const groups = groupAvgs(k);
+      if(groups.length){ renderRadar($(`chart_${k}`), groups); }
+      else { $(`chart_${k}`).innerHTML = '<div class="helper">Add grouping definitions to enable the radar chart.</div>'; }
+    });
+  }
+
+  // ======= Exports =======
+  function toCSV(rows){
+    const esc=v=>{const s=String(v??''); return /[",\n]/.test(s)? '"'+s.replaceAll('"','""')+'"': s};
+    return rows.map(r=>r.map(esc).join(',')).join('\n');
+  }
+  function download(content, name, type){
+    const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
+  }
+  $('pdfBtn').onclick=()=>window.print();
+  $('csvBtn').onclick=()=>{
+    const rows=[["Domain","Final Level","Description"]];
+    selected.forEach(k=>{ const d=Domains[k]; const {level}=d.items.length?calcFinal(k):{level:1}; rows.push([d.name,`Level ${level}`,d.levels[level]]) });
+    download(toCSV(rows),'learning-maturity-report.csv','text/csv');
+  };
+  $('mdBtn').onclick=()=>{
+    let md = `# Learning Maturity Panel — Report\n\n## Executive Summary\n`;
+    selected.forEach(k=>{ const d=Domains[k]; const {level}=d.items.length?calcFinal(k):{level:1}; md += `\n### ${d.name}\n**Final Level:** Level ${level}\n\n${d.levels[level]}\n`; if(d.groupings.length){ md += `\n**Grouping Scores (1–5):**\n` + groupAvgs(k).map(g=>`- ${g.label}: ${g.score.toFixed(2)}`).join('\n') + `\n![Radar Chart](#)\n`; } });
+    download(md,'learning-maturity-report.md','text/markdown');
+  };
+
+  // ======= Nav =======
+  $('backBtn').onclick = $('backBtn2').onclick = ()=>{ selected=[]; responsesByDomain={}; activeIndex=0; renderMain(); };
+  $('startBtn').onclick = ()=> startRunner('start');
+  $('demoBtn').onclick = ()=> startRunner('demo');
+
+  // ======= Boot =======
+  renderMain();
+  </script>
+</body>
+</html>
